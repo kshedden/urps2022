@@ -12,9 +12,9 @@ def genar(n, p, r):
         x[:, j] = r*x[:, j-1] + np.sqrt(1 - r**2)*x[:, j]
     return x
 
-# Use PCA to reduce the 'x' data to 'kx' variates, and
-# to reduce the 'y' data to 'ky' variates, then use 
-# CCA to reduce the PC scores to 'qq' variates.
+# Use PCA to reduce the 'x' data to 'kx' variates, and to reduce the
+# 'y' data to 'ky' variates, then use CCA to reduce the PC scores to
+# 'qq' variates.
 def pca_cca(x, y, kx, ky, qq):
 
     # Center the variables
@@ -58,10 +58,10 @@ def pca_cca(x, y, kx, ky, qq):
                  ypcaproj=ypcaproj, yccaproj=yccaproj)
 
 
-# Run some checks on the PCA and CCA calculations.
-# Sample size (n), dimension of the observed data (px, py),
-# autocorrelation for generated data (r), dimensions for
-# PCA rediction (kx, ky), dimension of CCA reduction (qq).
+# Run some checks on the PCA and CCA calculations.  Sample size (n),
+# dimension of the observed data (px, py), autocorrelation for
+# generated data (r), dimensions for PCA rediction (kx, ky), dimension
+# of CCA reduction (qq).
 def test_pca_cca(n, px, py, r, kx, ky, qq):
 
     x = genar(n, px, r)
@@ -111,15 +111,26 @@ def find_pareto(pts):
             keep.append(i)
     return pts[keep, :]
 
-        
+# Take data 'x' and 'y' (observations in rows and variables in
+# columns), reduce to 'kx' and 'ky' dimensions respectively using
+# PCA, then use CCA to reduce to maximally correlated variates.
+# Returns 'm x 3' arrays in which each row contains a correlation, an
+# x-variance, and a y-variance.  The first returned array contains all
+# such points and the second returned array contains only the points
+# on the Pareto front.
 def pca_cca_pareto(x, y, kx, ky):
 
+    # Center the data
     x = x - x.mean(0)
-    _, sx, _ = np.linalg.svd(x, 0)
-    sx = sx.max()
     y = y - y.mean(0)
+
+    # sx and sy are the maximum possible variances
+    # for x * u and y * v, where u and v are unit
+    # vectors.
+    _, sx, _ = np.linalg.svd(x, 0)
+    sx = sx.max()**2 / x.shape[0]
     _, sy, _ = np.linalg.svd(y, 0)
-    sy = sy.max()
+    sy = sy.max()**2 / y.shape[0]
 
     pts = []
     for kx1 in range(1, kx):
@@ -129,9 +140,9 @@ def pca_cca_pareto(x, y, kx, ky):
             y1 = np.dot(y, r.yfullmap[:, 0])
             pts.append(np.r_[r.cancor[0], x1.var()/sx, y1.var()/sy])
     pts = np.vstack(pts)
-    
+
     return pts, find_pareto(pts)
-                
+
 
 def test_pca_cca_pareto(n, px, py, r, kx, ky):
 
